@@ -10,7 +10,6 @@ const Home: NextPage = () => {
 
   const {data} = api.posts.getAll.useQuery();
 
-  console.log(data)
   return (
     <>
       <Head>
