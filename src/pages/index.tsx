@@ -8,17 +8,31 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import Image from "next/image";
 import {LoadingPage} from "~/components/loading";
+import { useState } from "react";
 dayjs.extend(relativeTime);
+
+
+
+
 const CreatePostWizzard = () => {
   const {user} = useUser();
 
+  const [input, setInput] = useState<string>("");
+
+  const ctx = api.useContext();
+
+  const {mutate, isLoading:isPosting} = api.posts.create.useMutation({onSuccess:()=>{
+    setInput("");
+    void ctx.posts.getAll.invalidate();
+  }});
 
 
   if (!user) return null;
 
   return <div className="flex gap-3 w-full">
     <Image className="w-14 h-14 rounded-full" width={56} height={56} src={user.profileImageUrl} alt="profile image" />
-    <input type="text" placeholder="write here" className="bg-transparent grow outline-none" />
+    <input type="text" placeholder="write here" className="bg-transparent grow outline-none" value={input} onChange={(e)=> setInput(e.target.value)} disabled={isPosting}/>
+    <button onClick={()=> mutate({content: input})}>post</button>
   </div>
 }
 
@@ -32,7 +46,7 @@ return <div key={post.id} className="border-b border-slate-400 p-4 py-8 flex ite
             <span>{`@${user.username}`} </span>
             <span className="font-thin">{`· ${dayjs(post.createdAt).fromNow()}`}</span>
           </div>
-          <span>
+          <span className="text-xl">
             {post.content}
           </span>
 
@@ -42,7 +56,7 @@ return <div key={post.id} className="border-b border-slate-400 p-4 py-8 flex ite
 const Feed = () => {
   const {data, isLoading: postsLoading} = api.posts.getAll.useQuery();
   if (postsLoading) return <LoadingPage/>
-  if(!data) throw new Error("Something went wrong");
+  if (!data) return <div>Something went wrong</div>;
   return (
     <div>
     {data?.map((fullPost)=>(
